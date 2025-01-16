@@ -5,7 +5,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // middlewares
 app.use(express.json())
@@ -60,6 +60,7 @@ async function run() {
 
     const userCollection = client.db('micro-task').collection('users')
     const taskCollection = client.db('micro-task').collection('tasks')
+    const submissionCollection = client.db('micro-task').collection('submissions')
 
     // jwt token related APIs
     app.post('/jwt', (req,res)=>{
@@ -79,6 +80,18 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/tasks', async(req,res)=>{
+      const result = await taskCollection.find().toArray();
+      res.send(result)
+    })
+
+    app.get('/task/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await taskCollection.findOne(query);
+      res.send(result)
+    })
+
     app.get('/tasks/:email', async(req,res)=>{
       const email = req.params.email;
       const query = {email};
@@ -86,7 +99,35 @@ async function run() {
       res.send(result);
     })
 
-// users related APIs
+    app.delete('/task/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await taskCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    // task form submission related APIs
+    app.post('/submission', async(req,res)=>{
+      const submit = req.body;
+      const result = await submissionCollection.insertOne(submit);
+      res.send(result)
+    })
+
+    app.get('/submissions/:email', async(req,res)=>{
+      const email = req.params.email;
+      const query = {workerEmail: email};
+      const result = await submissionCollection.find(query).toArray();
+      res.send(result)
+    })
+
+    app.get('/submits/:email', async(req,res)=>{
+      const email = req.params.email;
+      const query = {buyerEmail: email};
+      const result = await submissionCollection.find(query).toArray();
+      res.send(result)
+    })
+
+    // users related APIs
     app.post('/users', async(req,res)=>{
       const user = req.body;
       const query = {email: user.email}
@@ -107,6 +148,27 @@ async function run() {
       const result = await userCollection.findOne(query);
       res.send(result)
     })
+
+    app.delete('/user/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    app.patch('/user/:id', async(req,res)=>{
+      const id = req.params.id;
+      const updatedRole = req.body;
+      const query = {_id: new ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          role: updatedRole.role
+        }
+      }
+      const result = await userCollection.updateOne(query,updatedDoc);
+      res.send(result)
+    })
+
 
   } finally {
     // Ensures that the client will close when you finish/error
