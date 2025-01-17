@@ -106,6 +106,21 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/task/:id', async(req,res)=>{
+      const id = req.params.id;
+      const tasks = req.body;
+      const query = {_id: new ObjectId(id)}
+      const updatedDoc = {
+        $set: {
+          title: tasks.title,
+          details: tasks.details,
+          info: tasks.info
+        }
+      }
+      const result = await taskCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
+
     // task form submission related APIs
     app.post('/submission', async(req,res)=>{
       const submit = req.body;
