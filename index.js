@@ -127,6 +127,26 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/submit/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await submissionCollection.findOne(query)
+      res.send(result)
+    })
+
+    app.patch('/submit/:id', async(req,res)=>{
+      const id = req.params.id;
+      const subDetails = req.body;
+      const query = {_id: new ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          status: subDetails.status
+        }
+      }
+      const result = await submissionCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
+
     // users related APIs
     app.post('/users', async(req,res)=>{
       const user = req.body;
