@@ -61,6 +61,7 @@ async function run() {
     const userCollection = client.db('micro-task').collection('users')
     const taskCollection = client.db('micro-task').collection('tasks')
     const submissionCollection = client.db('micro-task').collection('submissions')
+    const withdrawCollection = client.db('micro-task').collection('withdraws')
 
     // jwt token related APIs
     app.post('/jwt', (req,res)=>{
@@ -162,6 +163,13 @@ async function run() {
       res.send(result)
     })
 
+    // Withdraw related APIs
+    app.post('/withdraws', async(req,res)=>{
+      const withdraws = req.body;
+      const result = await withdrawCollection.insertOne(withdraws);
+      res.send(result)
+    })
+    
     // users related APIs
     app.post('/users', async(req,res)=>{
       const user = req.body;
