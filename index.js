@@ -169,6 +169,31 @@ async function run() {
       const result = await withdrawCollection.insertOne(withdraws);
       res.send(result)
     })
+
+    app.get('/withdraws', async(req,res)=>{
+      const result = await withdrawCollection.find().toArray();
+      res.send((result))
+    })
+
+    app.get('/withdraw/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await withdrawCollection.findOne(query)
+      res.send(result)
+    })
+
+    app.patch('/withdraw/:id', async(req,res)=>{
+      const id = req.params.id;
+      const statusRes = req.body;
+      const query = {_id: new ObjectId(id)}
+      const updatedDoc = {
+        $set: {
+          status: statusRes.status
+        }
+      }
+      const result = await withdrawCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
     
     // users related APIs
     app.post('/users', async(req,res)=>{
