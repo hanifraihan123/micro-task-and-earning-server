@@ -4,6 +4,7 @@ const app = express();
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -210,6 +211,13 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/countData', async(req,res)=>{
+      const buyerCount = await userCollection.countDocuments({ role: 'buyer' });
+      const workerCount = await userCollection.countDocuments({ role: 'worker' });
+      const result = {buyer: buyerCount, worker: workerCount};
+      res.send(result)
+    })
+
     app.get('/user/:email',verifyToken, async(req,res)=>{
       const email = req.params.email;
       const query = {email};
@@ -237,6 +245,19 @@ async function run() {
       res.send(result)
     })
 
+    //Payment related APIs
+    app.post('/create-payment-intent', async(req,res)=>{
+      const {price} = req.body;
+      const amount = parseInt(price * 100)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      })
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    }) 
 
   } finally {
     // Ensures that the client will close when you finish/error
