@@ -63,6 +63,7 @@ async function run() {
     const taskCollection = client.db('micro-task').collection('tasks')
     const submissionCollection = client.db('micro-task').collection('submissions')
     const withdrawCollection = client.db('micro-task').collection('withdraws')
+    const paymentCollection = client.db('micro-task').collection('payments')
 
     // jwt token related APIs
     app.post('/jwt', (req,res)=>{
@@ -197,7 +198,7 @@ async function run() {
     })
     
     // users related APIs
-    app.post('/users',verifyToken, async(req,res)=>{
+    app.post('/users', async(req,res)=>{
       const user = req.body;
       const query = {email: user.email}
       const alreadyExist = await userCollection.findOne(query)
@@ -258,6 +259,32 @@ async function run() {
         clientSecret: paymentIntent.client_secret
       })
     }) 
+
+    app.post('/payment', async(req,res)=>{
+      const paymentInfo = req.body;
+      const result = await paymentCollection.insertOne(paymentInfo);
+      res.send(result)
+    })
+
+    app.get('/payments/:email', async(req,res)=>{
+      const email = req.params.email;
+      const query = {email};
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result)
+    })
+
+    app.patch('/changeCoin/:id', async(req,res)=>{
+      const id = req.params.id;
+      const coins = req.body;
+      const query = {_id: new ObjectId(id)}
+      const updatedDoc = {
+        $set: {
+          coin: coins.newCoin
+        }
+      }
+      const result = await userCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
 
   } finally {
     // Ensures that the client will close when you finish/error
