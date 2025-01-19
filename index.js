@@ -82,33 +82,33 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/tasks', async(req,res)=>{
+    app.get('/tasks',verifyToken, async(req,res)=>{
       const result = await taskCollection.find().toArray();
       res.send(result)
     })
 
-    app.get('/task/:id', async(req,res)=>{
+    app.get('/task/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const result = await taskCollection.findOne(query);
       res.send(result)
     })
 
-    app.get('/tasks/:email', async(req,res)=>{
+    app.get('/tasks/:email',verifyToken, async(req,res)=>{
       const email = req.params.email;
       const query = {email};
       const result = await taskCollection.find(query).toArray()
       res.send(result);
     })
 
-    app.delete('/task/:id', async(req,res)=>{
+    app.delete('/task/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await taskCollection.deleteOne(query)
       res.send(result)
     })
 
-    app.patch('/task/:id', async(req,res)=>{
+    app.patch('/task/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const tasks = req.body;
       const query = {_id: new ObjectId(id)}
@@ -124,34 +124,34 @@ async function run() {
     })
 
     // task form submission related APIs
-    app.post('/submission', async(req,res)=>{
+    app.post('/submission',verifyToken, async(req,res)=>{
       const submit = req.body;
       const result = await submissionCollection.insertOne(submit);
       res.send(result)
     })
 
-    app.get('/submissions/:email', async(req,res)=>{
+    app.get('/submissions/:email',verifyToken, async(req,res)=>{
       const email = req.params.email;
       const query = {workerEmail: email};
       const result = await submissionCollection.find(query).toArray();
       res.send(result)
     })
 
-    app.get('/submits/:email', async(req,res)=>{
+    app.get('/submits/:email',verifyToken, async(req,res)=>{
       const email = req.params.email;
       const query = {buyerEmail: email};
       const result = await submissionCollection.find(query).toArray();
       res.send(result)
     })
 
-    app.get('/submit/:id', async(req,res)=>{
+    app.get('/submit/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await submissionCollection.findOne(query)
       res.send(result)
     })
 
-    app.patch('/submit/:id', async(req,res)=>{
+    app.patch('/submit/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const subDetails = req.body;
       const query = {_id: new ObjectId(id)};
@@ -165,25 +165,25 @@ async function run() {
     })
 
     // Withdraw related APIs
-    app.post('/withdraws', async(req,res)=>{
+    app.post('/withdraws',verifyToken, async(req,res)=>{
       const withdraws = req.body;
       const result = await withdrawCollection.insertOne(withdraws);
       res.send(result)
     })
 
-    app.get('/withdraws', async(req,res)=>{
+    app.get('/withdraws',verifyToken, async(req,res)=>{
       const result = await withdrawCollection.find().toArray();
       res.send((result))
     })
 
-    app.get('/withdraw/:id', async(req,res)=>{
+    app.get('/withdraw/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await withdrawCollection.findOne(query)
       res.send(result)
     })
 
-    app.patch('/withdraw/:id', async(req,res)=>{
+    app.patch('/withdraw/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const statusRes = req.body;
       const query = {_id: new ObjectId(id)}
@@ -197,7 +197,7 @@ async function run() {
     })
     
     // users related APIs
-    app.post('/users', async(req,res)=>{
+    app.post('/users',verifyToken, async(req,res)=>{
       const user = req.body;
       const query = {email: user.email}
       const alreadyExist = await userCollection.findOne(query)
@@ -206,12 +206,12 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/users', async(req,res)=>{
+    app.get('/users',verifyToken, async(req,res)=>{
       const result = await userCollection.find().toArray()
       res.send(result)
     })
 
-    app.get('/countData', async(req,res)=>{
+    app.get('/countData',verifyToken, async(req,res)=>{
       const buyerCount = await userCollection.countDocuments({ role: 'buyer' });
       const workerCount = await userCollection.countDocuments({ role: 'worker' });
       const result = {buyer: buyerCount, worker: workerCount};
@@ -225,14 +225,14 @@ async function run() {
       res.send(result)
     })
 
-    app.delete('/user/:id', async(req,res)=>{
+    app.delete('/user/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const result = await userCollection.deleteOne(query);
       res.send(result);
     })
 
-    app.patch('/user/:id', async(req,res)=>{
+    app.patch('/user/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const updatedRole = req.body;
       const query = {_id: new ObjectId(id)};
@@ -246,7 +246,7 @@ async function run() {
     })
 
     //Payment related APIs
-    app.post('/create-payment-intent', async(req,res)=>{
+    app.post('/create-payment-intent',verifyToken, async(req,res)=>{
       const {price} = req.body;
       const amount = parseInt(price * 100)
       const paymentIntent = await stripe.paymentIntents.create({
