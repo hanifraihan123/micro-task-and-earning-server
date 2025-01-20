@@ -11,7 +11,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // middlewares
 app.use(express.json())
 app.use(cors({
-  origin: ['http://localhost:5173'], credentials: true
+  origin: ['http://localhost:5173','https://paidwork-task-and-earning.web.app'], credentials: true
 }))
 app.use(cookieParser())
 
@@ -54,9 +54,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     const userCollection = client.db('micro-task').collection('users')
@@ -69,7 +69,14 @@ async function run() {
     app.post('/jwt', (req,res)=>{
       const user = req.body;
       const token = jwt.sign(user,process.env.JWT_SECRET,{expiresIn: '5h'})
-      res.cookie('token',token,{ httpOnly: true }).send({success: true})
+      // res.cookie('token',token,{ httpOnly: true }).send({success: true})
+      res
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        })
+        .send({ success: true })
     })
     
     app.post('/logout', (req,res)=>{
@@ -118,6 +125,19 @@ async function run() {
           title: tasks.title,
           details: tasks.details,
           info: tasks.info
+        }
+      }
+      const result = await taskCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
+
+    app.patch('/updateWorker/:id',verifyToken, async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const newWorker = req.body;
+      const updatedDoc = {
+        $inc: {
+          workers: newWorker.worker
         }
       }
       const result = await taskCollection.updateOne(query,updatedDoc)
@@ -207,8 +227,69 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/user/:email',verifyToken, async(req,res)=>{
+      const email = req.params.email;
+      const query = { email };
+      const newCoin = req.body;
+      const updatedDoc = {
+        $inc: {
+          coin: -newCoin.coin
+        }
+      }
+      const result = await userCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
+
+    app.patch('/usersCoin/:email',verifyToken, async(req,res)=>{
+      const email = req.params.email;
+      const query = {email};
+      const updateCoin = req.body;
+      const updatedDoc = {
+        $set: {
+          coin: updateCoin.coin
+        }
+      }
+      const result = await userCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
+
+    app.patch('/increaseCoin/:email',verifyToken, async(req,res)=>{
+      const email = req.params.email;
+      const query = {email};
+      const updateCoin = req.body;
+      const updatedDoc = {
+        $inc: {
+          coin: updateCoin.amount
+        }
+      }
+      const result = await userCollection.updateOne(query,updatedDoc);
+      res.send(result)
+    })
+
     app.get('/users',verifyToken, async(req,res)=>{
       const result = await userCollection.find().toArray()
+      res.send(result)
+    })
+
+    app.get('/someUsers', async(req,res)=>{
+      const query = {role: 'worker'}
+      const options = {
+        sort: {coin: -1}
+      }
+      const result = await userCollection.find(query,options).toArray();
+      res.send(result)
+    })
+
+    app.patch('/updateCoin/:email',verifyToken, async(req,res)=>{
+      const email = req.params.email;
+      const query = {email};
+      const newCoin = req.body;
+      const updatedDoc = {
+        $inc: {
+          coin: newCoin.coin
+        }
+      }
+      const result = await userCollection.updateOne(query,updatedDoc)
       res.send(result)
     })
 
@@ -226,14 +307,14 @@ async function run() {
       res.send(result)
     })
 
-    app.delete('/user/:id',verifyToken, async(req,res)=>{
+    app.delete('/user/:id',verifyToken,verifyAdmin, async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const result = await userCollection.deleteOne(query);
       res.send(result);
     })
 
-    app.patch('/user/:id',verifyToken, async(req,res)=>{
+    app.patch('/user/:id',verifyToken,verifyAdmin, async(req,res)=>{
       const id = req.params.id;
       const updatedRole = req.body;
       const query = {_id: new ObjectId(id)};
@@ -260,20 +341,20 @@ async function run() {
       })
     }) 
 
-    app.post('/payment', async(req,res)=>{
+    app.post('/payment',verifyToken, async(req,res)=>{
       const paymentInfo = req.body;
       const result = await paymentCollection.insertOne(paymentInfo);
       res.send(result)
     })
 
-    app.get('/payments/:email', async(req,res)=>{
+    app.get('/payments/:email',verifyToken, async(req,res)=>{
       const email = req.params.email;
       const query = {email};
       const result = await paymentCollection.find(query).toArray();
       res.send(result)
     })
 
-    app.patch('/changeCoin/:id', async(req,res)=>{
+    app.patch('/changeCoin/:id',verifyToken, async(req,res)=>{
       const id = req.params.id;
       const coins = req.body;
       const query = {_id: new ObjectId(id)}
